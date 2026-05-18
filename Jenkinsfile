@@ -1,10 +1,15 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.12-slim'
+            args '--user root'
+        }
+    }
 
     stages {
         stage('Install') {
             steps {
-                sh 'pip3 install -r requirements.txt'
+                sh 'pip install -r requirements.txt'
             }
         }
 
@@ -22,24 +27,8 @@ pipeline {
 
         stage('Security') {
             steps {
-                sh 'pip3 install pip-audit'
+                sh 'pip install pip-audit'
                 sh 'pip-audit -r requirements.txt'
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                sh 'docker build -t ci-demo:latest .'
-                sh 'docker run ci-demo:latest'
-            }
-        }
-
-        stage('Deploy') {
-            when {
-                branch 'main'
-            }
-            steps {
-                echo 'All checks passed. Deploying to production...'
             }
         }
     }
@@ -53,4 +42,3 @@ pipeline {
         }
     }
 }
-```
