@@ -1,34 +1,29 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.12-slim'
-            args '--user root'
-        }
-    }
+    agent any
 
     stages {
         stage('Install') {
             steps {
-                sh 'pip install -r requirements.txt'
+                sh 'pip3 install -r requirements.txt || pip install -r requirements.txt'
             }
         }
 
         stage('Lint') {
             steps {
-                sh 'flake8 src/ tests/ --max-line-length=88'
+                sh 'python3 -m flake8 src/ tests/ --max-line-length=88'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=80'
+                sh 'python3 -m pytest tests/ --cov=src --cov-report=term-missing --cov-fail-under=80'
             }
         }
 
         stage('Security') {
             steps {
-                sh 'pip install pip-audit'
-                sh 'pip-audit -r requirements.txt'
+                sh 'pip3 install pip-audit || pip install pip-audit'
+                sh 'python3 -m pip_audit -r requirements.txt'
             }
         }
     }
