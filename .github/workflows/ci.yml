@@ -47,23 +47,33 @@ jobs:
       - name: Scan for vulnerabilities
         run: pip-audit -r requirements.txt
 
+  docker:
+    runs-on: ubuntu-latest
+    needs: [test, security]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t ci-demo:latest .
+
+      - name: Run tests inside Docker container
+        run: docker run ci-demo:latest
+
   deploy:
     runs-on: ubuntu-latest
-    needs: [test, security]          # only deploy if BOTH jobs pass
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'  # only deploy from main branch
+    needs: [test, security, docker]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Deploy to production
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
         run: |
           echo "All checks passed. Deploying to production..."
-          echo "In a real project this would be:"
-          echo "  - docker build + push"
-          echo "  - kubectl apply"
-          echo "  - ssh into server and restart service"
-          echo "  - trigger AWS/GCP/Azure deployment"
+          echo "  - Docker image built and tested ✅"
+          echo "  - Would push to Docker Hub / AWS ECR / GCP Artifact Registry"
+          echo "  - Would trigger Kubernetes rollout or restart service"
           echo "Deploy complete!"
